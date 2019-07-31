@@ -89,7 +89,10 @@ namespace Simulator
             });
 
             Game g = new Game(us, them);
-            
+
+            InningState ins = new InningState();
+            ins.Bases = 8;
+            ins.WalkHitter2();
         }
     }
 }

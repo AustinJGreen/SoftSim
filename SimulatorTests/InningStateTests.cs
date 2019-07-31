@@ -62,12 +62,12 @@ namespace Tests
         [Test]
         public void TestWalk()
         {
-            byte[] correct = new byte[] { 1, 3, 3, 7, 5, 7, 7, 15 };
+            byte[] correct = new byte[] { 1, 3, 3, 7, 5, 7, 7, 15, 9 };
 
-            InningState a = new InningState();
+            
             for (byte i = 0; i < correct.Length; i++)
             {
-                a.Bases = i;
+                InningState a = new InningState(i);
                 a.WalkHitter();
                 Assert.AreEqual(a.Bases, correct[i]);
             }

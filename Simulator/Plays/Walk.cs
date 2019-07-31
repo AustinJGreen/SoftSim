@@ -8,6 +8,7 @@
 
         public override InningState Simulate(InningState state)
         {
+            state.WalkHitter();
             return state;
         }
     }

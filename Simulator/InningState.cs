@@ -4,30 +4,40 @@ namespace Simulator
 {
     public struct InningState
     {
+        private byte bases;
+
+        /// <summary>
+        /// Gets the bases state
+        /// </summary>
+        public byte Bases => bases;
+
+        /// <summary>
+        /// Gets or sets the number of outs
+        /// </summary>
         public int Outs { get; set; }
 
+        /// <summary>
+        /// Gets or sets the runs scored
+        /// </summary>
         public int RunsScored { get; set; }
 
-        public byte Bases { get; set; }
-
+        /// <summary>
+        /// Checks if the inning is over
+        /// </summary>
+        public bool IsOver => Outs >= 3 || RunsScored >= 7;
 
         /// <summary>
         /// Gets the amount of base runners
         /// </summary>
-        /// <returns>The amount of base runners</returns>
-        public int BaseRunnerCount()
-        {
-            return (Bases & 1) + ((Bases >> 1) & 1) + ((Bases >> 2) & 1);
-        }
+        public int BaseRunners => (bases & 1) + ((bases >> 1) & 1) + ((bases >> 2) & 1);
 
         /// <summary>
-        /// Gets whether the runner on a base has to run
+        /// Calculates and carry's scored runs from bases to RunsScored
         /// </summary>
-        /// <param name="base">The base to check</param>
-        /// <returns></returns>
-        public bool IsOffensiveForceOn(int @base)
+        private void CarryPoints()
         {
-            return (Bases & ((1 << @base) - 1)) != 0;
+            RunsScored += ((bases >> 3) & 1) + ((bases >> 4) & 1) + ((bases >> 5) & 1) + ((bases >> 6) & 1) + ((bases >> 7) & 1);
+            bases &= 0b111;
         }
 
         /// <summary>
@@ -37,47 +47,42 @@ namespace Simulator
         /// <returns></returns>
         public bool RunnerOnBase(int @base)
         {
-            return (Bases & (1 << @base)) != 0;
+            return (bases & (1 << @base)) != 0;
+        }
+
+        /// <summary>
+        /// Sets a batter on first and advances all batters if necessary
+        /// </summary>
+        public void WalkHitter()
+        {
+            bases |= (byte)(bases + 1);
+            CarryPoints();
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="base"></param>
-        public void AddRunnerOnBase(int @base)
+        /// <param name="bases"></param>
+        public void Hit(int bases)
         {
-            
-        }
-
-        public void WalkHitter()
-        {
-            //Each bit moves up only if bit before is set
-            //If person at 3, 2, 1, go to 4th (home)
-            //If person at 2, 1, go to 3rd
-            //If person at 1, go to 2nd
-            //Set 1st
-
-            Bases |= (byte)(Bases + 1);
+            bases <<= bases;
+            bases |= (byte)(1 << bases);
+            CarryPoints();
         }
 
         /// <summary>
         /// Moves all runners on base a specified number of bases, does not add any new base runners.
         /// </summary>
-        /// <param name="bases">The number of bases to move each runner</param>
-        public void MoveAllRunners(int bases)
+        /// <param name="numBases">The number of bases to move each runner</param>
+        public void MoveAllRunners(int numBases)
         {
-            if (bases > 4)
+            if (numBases > 4)
             {
-                throw new ArgumentOutOfRangeException(nameof(bases), "Maximum amount of bases to run is 4.");
+                throw new ArgumentOutOfRangeException(nameof(numBases), "Maximum amount of bases to run is 4.");
             }
 
-            Bases <<= bases;
-            RunsScored += ((Bases >> 3) & 1) + ((Bases >> 4) & 1) + ((Bases >> 5) & 1) + ((Bases >> 6) & 1) + ((Bases >> 7) & 1);
-        }
-
-        public bool Over()
-        {
-            return Outs >= 3 || RunsScored >= 7;
+            bases <<= numBases;
+            CarryPoints();
         }
 
         public override int GetHashCode()
@@ -106,7 +111,12 @@ namespace Simulator
         {
             Outs = previous.Outs;
             RunsScored = previous.RunsScored;
-            Bases = previous.Bases;
+            bases = previous.bases;
+        }
+
+        public InningState(byte bases) : this()
+        {
+            this.bases = bases;
         }
 
         public static bool operator ==(InningState a, InningState b)
